@@ -52,6 +52,7 @@ struct sshauthopt {
 
 	int force_tun_device;
 	char *force_command;
+	char *valid_hostname;
 
 	/* Custom environment */
 	size_t nenv;

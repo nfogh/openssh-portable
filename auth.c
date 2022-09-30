@@ -770,6 +770,7 @@ auth_log_authopts(const char *loc, const struct sshauthopt *opts, int do_remote)
 	snprintf(msg, sizeof(msg), "key options:%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	    opts->permit_agent_forwarding_flag ? " agent-forwarding" : "",
 	    opts->force_command == NULL ? "" : " command",
+	    opts->valid_hostname == NULL ? "" : " valid-hostname",
 	    do_env ?  " environment" : "",
 	    opts->valid_before == 0 ? "" : "expires",
 	    opts->no_require_user_presence ? " no-touch-required" : "",

@@ -250,6 +250,9 @@ force-command           string        Specifies a command that is executed
                                       ssh command-line) whenever this key is
                                       used for authentication.
 
+valid-hostname          string        Specifies the hostname this certificate is
+                                      valid for.
+
 source-address          string        Comma-separated list of source addresses
                                       from which this certificate is accepted
                                       for authentication. Addresses are

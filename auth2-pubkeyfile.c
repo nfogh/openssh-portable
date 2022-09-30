@@ -133,6 +133,17 @@ auth_authorise_keyopts(struct passwd *pw, struct sshauthopt *opts,
 			return -1;
 		}
 	}
+
+	/* Check hostname restriction from certificate */
+	if (opts->valid_hostname != NULL) {
+		char hostname[HOST_NAME_MAX + 1];
+		gethostname(hostname, sizeof(hostname));
+
+		if (strncmp(hostname, opts->valid_hostname, sizeof(hostname))) {
+			error("Hostnames do not match. Server: %s != certificate: %s", hostname, opts->valid_hostname);
+			return -1;
+		}
+	}
 	/*
 	 *
 	 * XXX this is spammy. We should report remotely only for keys

@@ -136,6 +136,21 @@ cert_option_list(struct sshauthopt *opts, struct sshbuf *oblob,
 				}
 				opts->force_command = command;
 				found = 1;
+			} else if (strcmp(name, "valid-hostname") == 0) {
+				if ((r = sshbuf_get_cstring(data, &command,
+				    NULL)) != 0) {
+					error_r(r, "Unable to parse \"%s\" "
+					    "section", name);
+					goto out;
+				}
+				if (opts->valid_hostname != NULL) {
+					error("Certificate has multiple "
+					    "valid-hostname options");
+					free(command);
+					goto out;
+				}
+				opts->valid_hostname = command;
+				found = 1;
 			} else if (strcmp(name, "source-address") == 0) {
 				if ((r = sshbuf_get_cstring(data, &allowed,
 				    NULL)) != 0) {
@@ -208,6 +223,7 @@ sshauthopt_free(struct sshauthopt *opts)
 
 	free(opts->cert_principals);
 	free(opts->force_command);
+	free(opts->valid_hostname);
 	free(opts->required_from_host_cert);
 	free(opts->required_from_host_keys);
 
@@ -366,6 +382,14 @@ sshauthopt_parse(const char *opts, const char **errstrp)
 			}
 			ret->force_command = opt_dequote(&opts, &errstr);
 			if (ret->force_command == NULL)
+				goto fail;
+		} else if (opt_match(&opts, "hostname")) {
+			if (ret->valid_hostname != NULL) {
+				errstr = "multiple \"hostname\" clauses";
+				goto fail;
+			}
+			ret->valid_hostname = opt_dequote(&opts, &errstr);
+			if (ret->valid_hostname == NULL)
 				goto fail;
 		} else if (opt_match(&opts, "principals")) {
 			if (ret->cert_principals != NULL) {
@@ -683,6 +707,7 @@ sshauthopt_copy(const struct sshauthopt *orig)
 	} while (0)
 	OPTSTRING(cert_principals);
 	OPTSTRING(force_command);
+	OPTSTRING(valid_hostname);
 	OPTSTRING(required_from_host_cert);
 	OPTSTRING(required_from_host_keys);
 #undef OPTSTRING
@@ -825,6 +850,8 @@ sshauthopt_serialise(const struct sshauthopt *opts, struct sshbuf *m,
 	    (r = serialise_nullable_string(m,
 	    untrusted ? "true" : opts->force_command)) != 0 ||
 	    (r = serialise_nullable_string(m,
+	    untrusted ? "true" : opts->valid_hostname)) != 0 ||
+	    (r = serialise_nullable_string(m,
 	    untrusted ? NULL : opts->required_from_host_cert)) != 0 ||
 	    (r = serialise_nullable_string(m,
 	    untrusted ? NULL : opts->required_from_host_keys)) != 0)
@@ -885,6 +912,7 @@ sshauthopt_deserialise(struct sshbuf *m, struct sshauthopt **optsp)
 	/* String options may be NULL */
 	if ((r = deserialise_nullable_string(m, &opts->cert_principals)) != 0 ||
 	    (r = deserialise_nullable_string(m, &opts->force_command)) != 0 ||
+	    (r = deserialise_nullable_string(m, &opts->valid_hostname)) != 0 ||
 	    (r = deserialise_nullable_string(m,
 	    &opts->required_from_host_cert)) != 0 ||
 	    (r = deserialise_nullable_string(m,

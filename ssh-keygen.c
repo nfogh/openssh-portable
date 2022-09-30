@@ -1677,6 +1677,8 @@ finalise_cert_exts(void)
 		cert_ext_add("source-address", certflags_src_addr, 1);
 	if ((certflags_flags & CERTOPT_REQUIRE_VERIFY) != 0)
 		cert_ext_add("verify-required", NULL, 1);
+	if (certflags_valid_hostname != NULL)
+		cert_ext_add("valid-hostname", certflags_command, 1);
 	/* extensions */
 	if ((certflags_flags & CERTOPT_X_FWD) != 0)
 		cert_ext_add("permit-X11-forwarding", NULL, 0);
@@ -2028,6 +2030,13 @@ add_cert_option(char *opt)
 		if (certflags_command != NULL)
 			fatal("force-command already specified");
 		certflags_command = xstrdup(val);
+	} else if (strncasecmp(opt, "valid-hostname=", 15) == 0) {
+		val = opt + 15;
+		if (*val == '\0')
+			fatal("Empty valid-hostname option");
+		if (certflags_command != NULL)
+			fatal("valid-hostname already specified");
+		certflags_command = xstrdup(val);
 	} else if (strncasecmp(opt, "source-address=", 15) == 0) {
 		val = opt + 15;
 		if (*val == '\0')
@@ -2074,7 +2083,8 @@ show_options(struct sshbuf *optbuf, int in_critical)
 			printf("\n");
 		} else if (in_critical &&
 		    (strcmp(name, "force-command") == 0 ||
-		    strcmp(name, "source-address") == 0)) {
+		    strcmp(name, "source-address") == 0 ||
+		    strcmp(name, "valid-hostname") == 0)) {
 			if ((r = sshbuf_get_cstring(option, &arg, NULL)) != 0)
 				fatal_fr(r, "parse critical");
 			printf(" %s\n", arg);
